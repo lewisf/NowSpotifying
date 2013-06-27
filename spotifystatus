@@ -1,0 +1,45 @@
+#!/usr/bin/env ruby
+
+require 'appscript'
+
+class SpotifyWatcher
+  attr_accessor :play_status, :artist, :name, :spotify, :messages
+
+  def initialize
+    while true do
+      @spotify = @spotify || get_app('Spotify')
+      if @spotify
+        @artist = spotify.current_track.artist.get()
+        @name = spotify.current_track.name.get()
+        @play_status = @spotify.player_state.get() == :playing
+      end
+
+      @messages = @messages || get_app('Messages')
+      if @play_status
+        messages.status_message.set("♫ Playing: #{@artist} - #{@name}")
+      else
+        messages.status_message.set("Available")
+      end
+
+      sleep 5
+    end
+  end
+
+  def get_app(app_name)
+    begin
+      Appscript.app(app_name)
+    rescue
+      STDERR.puts "#{app_name} is not running."
+    end
+  end
+
+end
+
+puts "Now Spotifying has started."
+puts "► Updating your Messages status based on Spotify"
+puts "► To run this script as a daemon, use nohup as follows:"
+puts "  nohup ./spotifystatus &> /dev/null &"
+puts ""
+puts "WARNING: Currently, the process isn't automatically managed so you'll have to kill it using 'kill'"
+
+SpotifyWatcher.new
